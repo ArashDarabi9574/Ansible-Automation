@@ -1,0 +1,10 @@
+[Unit]
+Description=Script Test
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/arashdarabi99/Desktop/Clone/script.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

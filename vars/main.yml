@@ -1,0 +1,35 @@
+# Name of the SSH key (e.g. git_ssh_key)
+KEY_TITLE: git_ssh_key
+
+# Location of the SSH key to be (e.g. ~/.ssh/id_rsa_git)
+KEY_PATH: ~/.ssh/id_rsa
+
+# # GitHub personal access token
+GITHUB_ACCESS_TOKEN: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          66643163363230363761643331646162313034393737633161613638353830323232343034613764
+          3737353565343434356263326336373361623530363162320a653932386635633066393361336263
+          61393262613462396237623636346535323262393061346537306562323232313366383538316438
+          3862366139336239370a383834393765383737343963366263363463646666613531326364383736
+          66643237386264306635376165366431633662383430333163383762373337333031383861333630
+          6536366231623138643033363462353230313365326530633335
+
+
+# Git repository to be cloned. Must be SSH (not https)
+GIT_REPO: git@github.com:ArashDarabi9574/Ansible.git
+
+# Branch of the git repository (e.g. master)
+GIT_BRANCH: main
+
+# Directory where the repository will be cloned (e.g. /home/user/repo_name)
+CLONE_DEST: /home/arashdarabi99/Desktop/Clone/
+
+# Location of the SSH known hosts file (e.g. ~/.ssh/known_hosts)
+KNOWN_HOSTS_PATH: ~/.ssh/known_hosts
+
+# Location of the git binary (e.g. /usr/bin/git)
+GIT_EXECUTABLE: /usr/bin/git
+
+# Github FQDN
+GIT_SERVER_FQDN: github.com
+ 

@@ -1,0 +1,97 @@
+---
+- hosts: localhost
+  vars_files:
+    - vars/main.yml
+  tasks: 
+    - name: Check if ssh key is already present
+      stat:
+        path: "{{ KEY_PATH }}"
+      register: key_stat_result
+
+    - name: Generate SSH key for accessing GitHub
+      command: "ssh-keygen -t rsa -f {{ KEY_PATH }} -N ''"
+      when: not key_stat_result.stat.exists
+
+    - name: Get key content
+      command: "cat {{ KEY_PATH }}.pub"
+      register: key_content
+
+    - name: Check if known_host exists
+      stat:
+        path: "{{ KNOWN_HOSTS_PATH }}"
+      register: known_hosts_stat
+
+    - name: Create known_hosts if it doesn't exist
+      file:
+        path: "{{ KNOWN_HOSTS_PATH }}"
+        state: touch
+      when: not known_hosts_stat.stat.exists
+
+    - name: Get the content of known hosts
+      shell: "cat {{ KNOWN_HOSTS_PATH }} | grep {{ GIT_SERVER_FQDN }}"
+      register: host_stat
+      failed_when: host_stat.rc > 1
+
+    - name: Modify known hosts
+      block:
+        - name: Fetch GitHub public key
+          command: "ssh-keyscan -T 10 {{ GIT_SERVER_FQDN }}"
+          register: keyscan
+
+        - name: Add GitHub public key to ssh known_hosts
+          lineinfile:
+            path: "{{ KNOWN_HOSTS_PATH }}"
+            create: yes
+            line: "{{ item }}"
+          with_items: '{{ keyscan.stdout_lines }}'
+      when: host_stat.rc == 1
+
+    - name: Add SSH public key to GitHub account
+      uri:
+        url: "https://api.{{ GIT_SERVER_FQDN }}/user/keys"
+        validate_certs: no
+        method: POST
+        body:
+          title: "{{ KEY_TITLE }}"
+          key: "{{ key_content.stdout }}"
+        body_format: json
+        headers:
+          Content-Type: "application/json"
+          Authorization: "token {{ GITHUB_ACCESS_TOKEN }}"
+        status_code:
+          - 201
+          - 422
+
+    - name: Configure SSH agent and clone repository
+      block:
+        - name: Remove old repository
+          file:
+            path: "{{ CLONE_DEST }}"
+            state: absent
+
+        - name: Add SSH key to SSH agent
+          shell: |
+            eval $(ssh-agent -s)
+            ssh-add {{ KEY_PATH }}
+
+        - name: Clone GitHub repo
+          git:
+            repo: 'git@github.com:ArashDarabi9574/Ansible.git'
+            dest: /home/arashdarabi99/Desktop/Clone/
+            version: main
+
+        - name: Move repo files to systemd
+          copy:
+            src: /home/arashdarabi99/Desktop/Clone/Test.service
+            dest: /etc/systemd/system/Test.service
+            remote_src: yes
+
+        - name: Reload systemd
+          command: systemctl daemon-reload
+
+        - name: Enable service
+          command: systemctl enable Test.service
+
+        - name: Start Service
+          command: systemctl start Test.service
+
